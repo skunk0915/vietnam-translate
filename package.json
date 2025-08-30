@@ -1,0 +1,27 @@
+{
+  "name": "vietnam-translate",
+  "version": "1.0.0",
+  "description": "日本語とベトナム語の双方向音声翻訳アプリ",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@google-cloud/translate": "^8.0.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "翻訳",
+    "音声認識",
+    "PWA",
+    "ベトナム語",
+    "日本語"
+  ],
+  "author": "",
+  "license": "MIT"
+}

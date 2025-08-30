@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本語⇔ベトナム語 音声翻訳</title>
+    
+    <!-- PWA設定 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="音声翻訳">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>日本語⇔ベトナム語 音声翻訳</h1>
+            <button id="historyBtn" class="header-btn">履歴</button>
+        </header>
+
+        <div class="container">
+            <!-- 日本語ウィンドウ -->
+            <div class="window" id="japaneseWindow">
+                <div class="window-header">
+                    <h2>日本語</h2>
+                    <button id="japaneseMic" class="mic-btn">
+                        🎤
+                    </button>
+                </div>
+                <div class="content" id="japaneseContent">
+                    音声認識を開始するにはマイクボタンを押してください
+                </div>
+                <div class="status" id="japaneseStatus">待機中</div>
+            </div>
+
+            <!-- ベトナム語ウィンドウ -->
+            <div class="window" id="vietnameseWindow">
+                <div class="window-header">
+                    <h2>Tiếng Việt</h2>
+                    <button id="vietnameseMic" class="mic-btn">
+                        🎤
+                    </button>
+                </div>
+                <div class="content" id="vietnameseContent">
+                    Nhấn nút micro để bắt đầu nhận dạng giọng nói
+                </div>
+                <div class="status" id="vietnameseStatus">Chờ</div>
+            </div>
+        </div>
+
+        <!-- 履歴モーダル -->
+        <div id="historyModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>会話履歴</h3>
+                    <button id="closeHistoryBtn">&times;</button>
+                </div>
+                <div class="modal-body" id="historyList">
+                    履歴がありません
+                </div>
+                <div class="modal-footer">
+                    <button id="clearHistoryBtn">履歴をクリア</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
