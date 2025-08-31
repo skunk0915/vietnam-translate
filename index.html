@@ -19,21 +19,32 @@
 <body>
     <div id="app">
         <header>
-            <h1>日本語⇔ベトナム語 音声翻訳</h1>
+            <h1>🤖 AI音声翻訳 (日本語⇔ベトナム語)</h1>
             <button id="historyBtn" class="header-btn">履歴</button>
         </header>
 
         <div class="container">
+            <!-- 自動音声認識ウィンドウ -->
+            <div class="window" id="autoWindow">
+                <div class="window-header">
+                    <h2>🎤 自動音声認識</h2>
+                    <button id="autoMic" class="mic-btn">
+                        🎤
+                    </button>
+                </div>
+                <div class="auto-content">
+                    音声を話すと自動で言語を判定して翻訳します
+                </div>
+                <div class="status" id="autoStatus">待機中</div>
+            </div>
+
             <!-- 日本語ウィンドウ -->
             <div class="window" id="japaneseWindow">
                 <div class="window-header">
                     <h2>日本語</h2>
-                    <button id="japaneseMic" class="mic-btn">
-                        🎤
-                    </button>
                 </div>
                 <div class="content" id="japaneseContent">
-                    音声認識を開始するにはマイクボタンを押してください
+                    認識結果がここに表示されます
                 </div>
                 <div class="status" id="japaneseStatus">待機中</div>
             </div>
@@ -42,12 +53,9 @@
             <div class="window" id="vietnameseWindow">
                 <div class="window-header">
                     <h2>Tiếng Việt</h2>
-                    <button id="vietnameseMic" class="mic-btn">
-                        🎤
-                    </button>
                 </div>
                 <div class="content" id="vietnameseContent">
-                    Nhấn nút micro để bắt đầu nhận dạng giọng nói
+                    Kết quả nhận dạng sẽ hiển thị ở đây
                 </div>
                 <div class="status" id="vietnameseStatus">Chờ</div>
             </div>

@@ -4,6 +4,7 @@ class VoiceTranslator {
         this.isListening = false;
         this.isRecognitionActive = false;
         this.currentLanguage = null;
+        this.detectedLanguage = null;
         this.history = JSON.parse(localStorage.getItem('translationHistory') || '[]');
         
         this.init();
@@ -39,7 +40,9 @@ class VoiceTranslator {
         this.recognition.onstart = () => {
             console.log('音声認識開始');
             this.isRecognitionActive = true;
-            if (this.currentLanguage === 'ja') {
+            if (this.currentLanguage === 'auto') {
+                document.getElementById('autoStatus').textContent = '聞いています...';
+            } else if (this.currentLanguage === 'ja') {
                 document.getElementById('japaneseStatus').textContent = '聞いています...';
             } else {
                 document.getElementById('vietnameseStatus').textContent = 'Đang nghe...';
@@ -94,9 +97,11 @@ class VoiceTranslator {
                     errorMessage = `音声認識エラー: ${event.error}`;
             }
             
-            const currentLangElement = this.currentLanguage === 'ja' 
-                ? document.getElementById('japaneseStatus') 
-                : document.getElementById('vietnameseStatus');
+            const currentLangElement = this.currentLanguage === 'auto'
+                ? document.getElementById('autoStatus')
+                : this.currentLanguage === 'ja' 
+                    ? document.getElementById('japaneseStatus') 
+                    : document.getElementById('vietnameseStatus');
             currentLangElement.textContent = errorMessage;
             currentLangElement.style.color = '#ff6b6b';
             
@@ -133,12 +138,8 @@ class VoiceTranslator {
     }
 
     setupEventListeners() {
-        document.getElementById('japaneseMic').addEventListener('click', () => {
-            this.toggleRecognition('ja');
-        });
-
-        document.getElementById('vietnameseMic').addEventListener('click', () => {
-            this.toggleRecognition('vi');
+        document.getElementById('autoMic').addEventListener('click', () => {
+            this.toggleAutoRecognition();
         });
 
         document.getElementById('historyBtn').addEventListener('click', () => {
@@ -160,15 +161,15 @@ class VoiceTranslator {
         });
     }
 
-    toggleRecognition(language) {
-        if (this.isListening && this.currentLanguage === language) {
+    toggleAutoRecognition() {
+        if (this.isListening) {
             this.stopListening();
         } else {
-            this.startListening(language);
+            this.startAutoListening();
         }
     }
 
-    async startListening(language) {
+    async startAutoListening() {
         if (this.isListening) {
             this.stopListening();
         }
@@ -195,22 +196,15 @@ class VoiceTranslator {
             return;
         }
 
-        this.currentLanguage = language;
+        this.currentLanguage = 'auto';
         this.retryCount = 0;
 
-        if (language === 'ja') {
-            this.recognition.lang = 'ja-JP';
-            document.getElementById('japaneseMic').classList.add('active');
-            document.getElementById('japaneseStatus').textContent = '準備中...';
-            document.getElementById('japaneseStatus').classList.add('listening');
-            document.getElementById('japaneseContent').textContent = '';
-        } else {
-            this.recognition.lang = 'vi-VN';
-            document.getElementById('vietnameseMic').classList.add('active');
-            document.getElementById('vietnameseStatus').textContent = 'Đang chuẩn bị...';
-            document.getElementById('vietnameseStatus').classList.add('listening');
-            document.getElementById('vietnameseContent').textContent = '';
-        }
+        this.recognition.lang = 'ja-JP';
+        document.getElementById('autoMic').classList.add('active');
+        document.getElementById('autoStatus').textContent = '準備中...';
+        document.getElementById('autoStatus').classList.add('listening');
+        document.getElementById('japaneseContent').textContent = '';
+        document.getElementById('vietnameseContent').textContent = '';
 
         this.isListening = true;
         
@@ -227,9 +221,11 @@ class VoiceTranslator {
             ? '音声認識に失敗しました。再度お試しください。' 
             : 'Nhận dạng giọng nói thất bại. Vui lòng thử lại.';
         
-        const currentLangElement = this.currentLanguage === 'ja' 
-            ? document.getElementById('japaneseStatus') 
-            : document.getElementById('vietnameseStatus');
+        const currentLangElement = this.currentLanguage === 'auto'
+            ? document.getElementById('autoStatus')
+            : this.currentLanguage === 'ja' 
+                ? document.getElementById('japaneseStatus') 
+                : document.getElementById('vietnameseStatus');
         
         currentLangElement.textContent = errorMessage;
         currentLangElement.style.color = '#ff6b6b';
@@ -279,18 +275,19 @@ class VoiceTranslator {
         
         this.isRecognitionActive = false;
 
-        document.getElementById('japaneseMic').classList.remove('active');
-        document.getElementById('vietnameseMic').classList.remove('active');
+        document.getElementById('autoMic').classList.remove('active');
+        document.getElementById('autoStatus').textContent = '待機中';
+        document.getElementById('autoStatus').classList.remove('listening');
+        document.getElementById('autoStatus').style.color = '';
         document.getElementById('japaneseStatus').textContent = '待機中';
         document.getElementById('vietnameseStatus').textContent = 'Chờ';
-        document.getElementById('japaneseStatus').classList.remove('listening');
-        document.getElementById('vietnameseStatus').classList.remove('listening');
         document.getElementById('japaneseStatus').style.color = '';
         document.getElementById('vietnameseStatus').style.color = '';
     }
 
     updateStatus() {
         if (!this.isListening) {
+            document.getElementById('autoStatus').textContent = '待機中';
             document.getElementById('japaneseStatus').textContent = '待機中';
             document.getElementById('vietnameseStatus').textContent = 'Chờ';
         }
@@ -309,20 +306,54 @@ class VoiceTranslator {
         }
     }
 
+    detectLanguage(text) {
+        const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+        const hiraganaKatakanaPattern = /[ひらがなカタカナ一-龯]/;
+        
+        if (vietnamesePattern.test(text)) {
+            return 'vi';
+        } else if (hiraganaKatakanaPattern.test(text)) {
+            return 'ja';
+        }
+        
+        const commonJapanese = ['こんにちは', 'ありがとう', 'すみません', 'はい', 'いいえ', 'です', 'ます', 'おはよう', 'こんばんは'];
+        const commonVietnamese = ['xin chào', 'cảm ơn', 'xin lỗi', 'vâng', 'không', 'tôi', 'bạn', 'chúng ta', 'làm'];
+        
+        const textLower = text.toLowerCase();
+        
+        for (const word of commonJapanese) {
+            if (textLower.includes(word)) {
+                return 'ja';
+            }
+        }
+        
+        for (const word of commonVietnamese) {
+            if (textLower.includes(word)) {
+                return 'vi';
+            }
+        }
+        
+        return 'ja';
+    }
+
     async handleSpeechResult(text) {
         console.log('認識結果:', text);
         
-        this.updateContent(this.currentLanguage, text);
+        this.detectedLanguage = this.detectLanguage(text);
+        console.log('検出言語:', this.detectedLanguage);
+        
+        this.updateDetectedLanguageStatus(this.detectedLanguage);
+        this.updateContent(this.detectedLanguage, text);
 
         try {
-            const translatedText = await this.translateText(text, this.currentLanguage);
-            const targetLanguage = this.currentLanguage === 'ja' ? 'vi' : 'ja';
+            const translatedText = await this.translateText(text, this.detectedLanguage);
+            const targetLanguage = this.detectedLanguage === 'ja' ? 'vi' : 'ja';
             
             this.updateContent(targetLanguage, translatedText);
             
             this.addToHistory({
                 timestamp: new Date(),
-                originalLanguage: this.currentLanguage,
+                originalLanguage: this.detectedLanguage,
                 originalText: text,
                 translatedText: translatedText,
                 targetLanguage: targetLanguage
@@ -330,12 +361,26 @@ class VoiceTranslator {
 
         } catch (error) {
             console.error('翻訳エラー:', error);
-            const errorMessage = this.currentLanguage === 'ja' 
+            const errorMessage = this.detectedLanguage === 'ja' 
                 ? '翻訳に失敗しました' 
                 : 'Dịch thất bại';
             
-            const targetLanguage = this.currentLanguage === 'ja' ? 'vi' : 'ja';
+            const targetLanguage = this.detectedLanguage === 'ja' ? 'vi' : 'ja';
             this.updateContent(targetLanguage, errorMessage);
+        }
+    }
+
+    updateDetectedLanguageStatus(detectedLang) {
+        if (detectedLang === 'ja') {
+            document.getElementById('japaneseStatus').textContent = '検出: 日本語';
+            document.getElementById('vietnameseStatus').textContent = 'Chờ';
+            document.getElementById('japaneseStatus').style.color = '#4CAF50';
+            document.getElementById('vietnameseStatus').style.color = '';
+        } else {
+            document.getElementById('vietnameseStatus').textContent = 'Phát hiện: Tiếng Việt';
+            document.getElementById('japaneseStatus').textContent = '待機中';
+            document.getElementById('vietnameseStatus').style.color = '#4CAF50';
+            document.getElementById('japaneseStatus').style.color = '';
         }
     }
 
