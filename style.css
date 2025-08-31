@@ -186,6 +186,48 @@ header h1 {
     color: #f44336;
 }
 
+/* スピーカーボタン */
+.content-controls {
+    padding: 10px 20px;
+    display: flex;
+    justify-content: flex-end;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.speaker-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ddd;
+    color: #333;
+    font-size: 1.2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.speaker-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.speaker-btn:active {
+    transform: scale(0.95);
+    background: #f0f0f0;
+}
+
+.history-item .speaker-btn {
+    float: right;
+    margin-left: 10px;
+    font-size: 1rem;
+    width: 30px;
+    height: 30px;
+}
+
 /* モーダル */
 .modal {
     position: fixed;
