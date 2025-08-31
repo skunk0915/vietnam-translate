@@ -6,15 +6,7 @@ class VoiceTranslator {
         this.currentLanguage = null;
         this.detectedLanguage = null;
         this.history = JSON.parse(localStorage.getItem('translationHistory') || '[]');
-        this.continuousText = '';
-        this.silenceTimer = null;
-        this.silenceDelay = 1500; // 1.5秒間無音の場合に翻訳実行
-        this.currentLangIndex = 0; // 現在の言語インデックス
-        this.languages = ['ja-JP', 'vi-VN']; // 交互に試行する言語
-        this.isLanguageSwitching = false;
-        this.accumulatedText = ''; // マイクオフまで蓄積するテキスト
-        this.displayedSourceText = ''; // 現在表示中の音声認識テキスト
-        this.currentDisplayedLang = null; // 現在表示中の言語
+        this.accumulatedText = '';
         
         this.init();
     }
@@ -39,7 +31,7 @@ class VoiceTranslator {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         this.recognition = new SpeechRecognition();
         
-        this.recognition.continuous = true;
+        this.recognition.continuous = false;
         this.recognition.interimResults = true;
         this.recognition.maxAlternatives = 1;
         this.recognitionTimeout = null;
@@ -49,9 +41,7 @@ class VoiceTranslator {
         this.recognition.onstart = () => {
             console.log('音声認識開始');
             this.isRecognitionActive = true;
-            if (this.currentLanguage === 'auto') {
-                document.getElementById('autoStatus').textContent = '聞いています...';
-            } else if (this.currentLanguage === 'ja') {
+            if (this.currentLanguage === 'ja') {
                 document.getElementById('japaneseStatus').textContent = '聞いています...';
             } else {
                 document.getElementById('vietnameseStatus').textContent = 'Đang nghe...';
@@ -72,37 +62,11 @@ class VoiceTranslator {
                 }
             }
 
-            if (this.currentLanguage === 'auto') {
-                // 自動認識モードでは連続テキストとして蓄積
-                if (finalTranscript) {
-                    // 最終結果を蓄積テキストに追加
-                    if (this.accumulatedText) {
-                        this.accumulatedText += ' ' + finalTranscript.trim();
-                    } else {
-                        this.accumulatedText = finalTranscript.trim();
-                    }
-                    console.log('蓄積テキスト更新:', this.accumulatedText);
-                    
-                    // 言語を検出して表示
-                    const detectedLang = this.detectLanguage(this.accumulatedText);
-                    this.displayContinuousText(this.accumulatedText, detectedLang, true);
-                    
-                    // 無音タイマーをリセット
-                    this.resetSilenceTimer();
-                    
-                } else if (interimTranscript) {
-                    // 暫定結果を表示（蓄積はしない）
-                    const tempText = this.accumulatedText ? this.accumulatedText + ' ' + interimTranscript : interimTranscript;
-                    const detectedLang = this.detectLanguage(tempText);
-                    this.displayContinuousText(tempText, detectedLang, false);
-                }
-            } else {
-                // 個別言語認識モードでは従来の動作
-                if (finalTranscript) {
-                    this.handleSpeechResult(finalTranscript.trim());
-                } else if (interimTranscript) {
-                    this.updateContent(this.currentLanguage, interimTranscript, true);
-                }
+            // 個別言語認識モード
+            if (finalTranscript) {
+                this.handleSpeechResult(finalTranscript.trim());
+            } else if (interimTranscript) {
+                this.updateContent(this.currentLanguage, interimTranscript, true);
             }
         };
 
@@ -111,7 +75,6 @@ class VoiceTranslator {
             this.isRecognitionActive = false;
             let errorMessage = '';
             let shouldRetry = false;
-            let shouldSwitchLanguage = false;
             
             switch(event.error) {
                 case 'network':
@@ -121,11 +84,7 @@ class VoiceTranslator {
                     errorMessage = 'マイクのアクセス許可が必要です。';
                     break;
                 case 'no-speech':
-                    if (this.currentLanguage === 'auto' && !this.isLanguageSwitching) {
-                        // 自動認識モードでno-speechエラーの場合、言語を切り替えて再試行
-                        shouldSwitchLanguage = true;
-                        errorMessage = `言語切り替え中... (${this.recognition.lang} → ${this.getNextLanguage()})`;
-                    } else if (this.retryCount < this.maxRetries) {
+                    if (this.retryCount < this.maxRetries) {
                         errorMessage = `音声が検出されませんでした (再試行 ${this.retryCount + 1}/${this.maxRetries})`;
                         shouldRetry = true;
                     } else {
@@ -139,19 +98,13 @@ class VoiceTranslator {
                     errorMessage = `音声認識エラー: ${event.error}`;
             }
             
-            const currentLangElement = this.currentLanguage === 'auto'
-                ? document.getElementById('autoStatus')
-                : this.currentLanguage === 'ja' 
-                    ? document.getElementById('japaneseStatus') 
-                    : document.getElementById('vietnameseStatus');
+            const currentLangElement = this.currentLanguage === 'ja' 
+                ? document.getElementById('japaneseStatus') 
+                : document.getElementById('vietnameseStatus');
             currentLangElement.textContent = errorMessage;
             currentLangElement.style.color = '#ff6b6b';
             
-            if (shouldSwitchLanguage && this.isListening) {
-                setTimeout(() => {
-                    this.switchRecognitionLanguage();
-                }, 1000);
-            } else if (shouldRetry && this.retryCount < this.maxRetries && this.isListening) {
+            if (shouldRetry && this.retryCount < this.maxRetries && this.isListening) {
                 this.retryCount++;
                 setTimeout(() => {
                     this.startRecognitionSafely();
@@ -184,10 +137,6 @@ class VoiceTranslator {
     }
 
     setupEventListeners() {
-        document.getElementById('autoMic').addEventListener('click', () => {
-            this.toggleAutoRecognition();
-        });
-
         document.getElementById('japaneseMic').addEventListener('click', () => {
             this.toggleLanguageRecognition('ja');
         });
@@ -223,76 +172,12 @@ class VoiceTranslator {
         });
     }
 
-    toggleAutoRecognition() {
-        if (this.isListening) {
-            this.stopListening();
-        } else {
-            this.startAutoListening();
-        }
-    }
-
     toggleLanguageRecognition(language) {
         if (this.isListening && this.currentLanguage === language) {
             this.stopListening();
         } else {
             this.startLanguageListening(language);
         }
-    }
-
-    async startAutoListening() {
-        if (this.isListening) {
-            this.stopListening();
-        }
-
-        if (!this.recognition) {
-            console.error('音声認識が利用できません');
-            alert('音声認識が利用できません。ブラウザを再読み込みしてください。');
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                } 
-            });
-            stream.getTracks().forEach(track => track.stop());
-            console.log('マイクアクセス許可確認完了');
-        } catch (error) {
-            console.error('マイクアクセス許可エラー:', error);
-            alert('マイクへのアクセス許可が必要です。ブラウザの設定を確認してください。');
-            return;
-        }
-
-        this.currentLanguage = 'auto';
-        this.retryCount = 0;
-        this.continuousText = ''; // 連続テキストを初期化
-        // this.accumulatedText = ''; // 蓄積テキストを初期化 - マイクオフまで保持
-        this.currentLangIndex = 0; // 言語インデックスをリセット
-
-        // 自動認識では連続認識を有効化
-        this.recognition.continuous = true;
-
-        // 最初は日本語から開始
-        this.recognition.lang = this.languages[this.currentLangIndex];
-        console.log('音声認識言語設定:', this.recognition.lang);
-        
-        this.updateMicButtonStates('auto');
-        document.getElementById('autoStatus').textContent = '準備中...';
-        document.getElementById('autoStatus').classList.add('listening');
-        // 既存のテキストをクリアせず、継続して音声認識を行う
-        // document.getElementById('japaneseContent').textContent = '音声認識開始';
-        // document.getElementById('vietnameseContent').textContent = 'Bắt đầu nhận dạng giọng nói';
-
-        this.isListening = true;
-        
-        setTimeout(() => {
-            if (this.isListening) {
-                this.startRecognitionSafely();
-            }
-        }, 500);
     }
 
     async startLanguageListening(language) {
@@ -324,9 +209,7 @@ class VoiceTranslator {
 
         this.currentLanguage = language;
         this.retryCount = 0;
-
-        // 言語固有認識では連続認識を無効化
-        this.recognition.continuous = false;
+        this.accumulatedText = '';
 
         // 言語設定
         if (language === 'ja') {
@@ -362,19 +245,15 @@ class VoiceTranslator {
 
     updateMicButtonStates(activeLanguage) {
         // すべてのマイクボタンを非アクティブ状態にリセット
-        document.getElementById('autoMic').classList.remove('active');
         document.getElementById('japaneseMic').classList.remove('active');
         document.getElementById('vietnameseMic').classList.remove('active');
 
         // アクティブな言語のボタンのみアクティブ状態に
-        if (activeLanguage === 'auto') {
-            document.getElementById('autoMic').classList.add('active');
-        } else if (activeLanguage === 'ja') {
+        if (activeLanguage === 'ja') {
             document.getElementById('japaneseMic').classList.add('active');
         } else if (activeLanguage === 'vi') {
             document.getElementById('vietnameseMic').classList.add('active');
         }
-        // null の場合はすべて非アクティブのまま（既にリセット済み）
     }
 
     handleRecognitionFailure() {
@@ -383,11 +262,9 @@ class VoiceTranslator {
             ? '音声認識に失敗しました。再度お試しください。' 
             : 'Nhận dạng giọng nói thất bại. Vui lòng thử lại.';
         
-        const currentLangElement = this.currentLanguage === 'auto'
-            ? document.getElementById('autoStatus')
-            : this.currentLanguage === 'ja' 
-                ? document.getElementById('japaneseStatus') 
-                : document.getElementById('vietnameseStatus');
+        const currentLangElement = this.currentLanguage === 'ja' 
+            ? document.getElementById('japaneseStatus') 
+            : document.getElementById('vietnameseStatus');
         
         currentLangElement.textContent = errorMessage;
         currentLangElement.style.color = '#ff6b6b';
@@ -395,33 +272,6 @@ class VoiceTranslator {
         setTimeout(() => {
             this.stopListening();
         }, 2000);
-    }
-
-    getNextLanguage() {
-        const nextIndex = (this.currentLangIndex + 1) % this.languages.length;
-        return this.languages[nextIndex];
-    }
-
-    switchRecognitionLanguage() {
-        console.log('言語切り替え実行');
-        this.isLanguageSwitching = true;
-        
-        // 次の言語に切り替え
-        this.currentLangIndex = (this.currentLangIndex + 1) % this.languages.length;
-        this.recognition.lang = this.languages[this.currentLangIndex];
-        
-        console.log('音声認識言語変更:', this.recognition.lang);
-        
-        // ステータス更新
-        document.getElementById('autoStatus').textContent = `言語変更: ${this.recognition.lang}`;
-        document.getElementById('autoStatus').style.color = '#4CAF50';
-        
-        setTimeout(() => {
-            this.isLanguageSwitching = false;
-            if (this.isListening) {
-                this.startRecognitionSafely();
-            }
-        }, 1000);
     }
 
     startRecognitionSafely() {
@@ -449,26 +299,12 @@ class VoiceTranslator {
         this.isListening = false;
         this.retryCount = 0;
         
-        // 無音タイマーをクリア
-        if (this.silenceTimer) {
-            clearTimeout(this.silenceTimer);
-            this.silenceTimer = null;
-        }
-        
         // 蓄積されたテキストがあれば最終翻訳と履歴保存を実行
         if (this.accumulatedText && this.accumulatedText.trim() !== '') {
             console.log('最終翻訳・履歴保存実行:', this.accumulatedText);
-            const finalDetectedLang = this.detectLanguage(this.accumulatedText);
-            this.finalTranslateAndSave(this.accumulatedText, finalDetectedLang);
-            this.accumulatedText = ''; // マイクオフ後にクリア
+            this.finalTranslateAndSave(this.accumulatedText, this.detectedLanguage);
+            this.accumulatedText = '';
         }
-        
-        // 表示状態をクリア
-        this.displayedSourceText = '';
-        this.currentDisplayedLang = null;
-        
-        // 古い連続テキストもクリア
-        this.continuousText = '';
         
         if (this.recognitionTimeout) {
             clearTimeout(this.recognitionTimeout);
@@ -486,9 +322,6 @@ class VoiceTranslator {
         this.isRecognitionActive = false;
 
         this.updateMicButtonStates(null);
-        document.getElementById('autoStatus').textContent = '待機中';
-        document.getElementById('autoStatus').classList.remove('listening');
-        document.getElementById('autoStatus').style.color = '';
         document.getElementById('japaneseStatus').textContent = '待機中';
         document.getElementById('vietnameseStatus').textContent = 'Chờ';
         document.getElementById('japaneseStatus').style.color = '';
@@ -505,7 +338,7 @@ class VoiceTranslator {
             // 翻訳結果を表示
             this.updateContent(targetLanguage, translatedText);
             
-            // 履歴に保存（マイクオフ時に1回だけ）
+            // 履歴に保存
             this.addToHistory({
                 timestamp: new Date(),
                 originalLanguage: detectedLang,
@@ -526,7 +359,6 @@ class VoiceTranslator {
 
     updateStatus() {
         if (!this.isListening) {
-            document.getElementById('autoStatus').textContent = '待機中';
             document.getElementById('japaneseStatus').textContent = '待機中';
             document.getElementById('vietnameseStatus').textContent = 'Chờ';
         }
@@ -537,12 +369,7 @@ class VoiceTranslator {
             ? document.getElementById('japaneseContent')
             : document.getElementById('vietnameseContent');
         
-        // 音声認識中の場合、音声認識テキストと同じ言語への更新を禁止
-        if (!this.isListening || this.currentDisplayedLang !== language) {
-            contentElement.textContent = text;
-        } else {
-            console.log('音声認識中のため、音声認識テキストの上書きを防止:', language, text.substring(0, 30) + '...');
-        }
+        contentElement.textContent = text;
         
         if (isInterim) {
             contentElement.style.opacity = '0.7';
@@ -561,241 +388,23 @@ class VoiceTranslator {
         }
     }
 
-    displayContinuousText(text, detectedLang, isFinal = false) {
-        if (!text || text.trim() === '') return;
-        
-        // 検出された言語のウインドウにテキストを表示（既存のテキストを維持）
-        const contentElement = detectedLang === 'ja' 
-            ? document.getElementById('japaneseContent')
-            : document.getElementById('vietnameseContent');
-        
-        // 相手言語のウインドウは翻訳時のみ更新
-        const otherContentElement = detectedLang === 'ja' 
-            ? document.getElementById('vietnameseContent')
-            : document.getElementById('japaneseContent');
-        
-        // 現在の音声認識テキスト状態を更新
-        this.displayedSourceText = text;
-        this.currentDisplayedLang = detectedLang;
-        
-        // 既存のテキストをクリアせず、新しいテキストを設定
-        contentElement.textContent = text;
-        contentElement.style.opacity = isFinal ? '1' : '0.7';
-        
-        // 相手言語のウインドウには翻訳待機メッセージを表示
-        if (!isFinal) {
-            // 既存のテキストがある場合は保持、なければ翻訳待機メッセージ
-            const existingText = otherContentElement.textContent;
-            if (!existingText || existingText === 'Kết quả nhận dạng sẽ hiển thị ở đây' || existingText === '認識結果がここに表示されます') {
-                otherContentElement.textContent = detectedLang === 'ja' ? 'Đang chờ dịch...' : '翻訳待機中...';
-            }
-        }
-        
-        // ベトナム語の場合はスピーカーボタンを表示
-        if (detectedLang === 'vi' && isFinal) {
-            const speakerBtn = document.getElementById('vietnameseSpeaker');
-            speakerBtn.style.display = 'flex';
-        }
-        
-        // 状態を更新
-        this.updateDetectedLanguageStatus(detectedLang);
-    }
-
-    resetSilenceTimer() {
-        // 無音タイマーをリセット
-        if (this.silenceTimer) {
-            clearTimeout(this.silenceTimer);
-            this.silenceTimer = null;
-        }
-        
-        // 新しい無音タイマーを設定（翻訳のみ実行、履歴保存は無し）
-        this.silenceTimer = setTimeout(() => {
-            if (this.accumulatedText && this.isListening) {
-                console.log('無音タイマー実行: 翻訳のみ（履歴保存は無し）');
-                const detectedLang = this.detectLanguage(this.accumulatedText);
-                this.translateTextOnly(this.accumulatedText, detectedLang);
-            }
-        }, this.silenceDelay);
-    }
-
-    async translateTextOnly(text, detectedLang) {
-        if (!text || text.trim() === '') return;
-        
-        try {
-            const translatedText = await this.translateText(text, detectedLang);
-            const targetLanguage = detectedLang === 'ja' ? 'vi' : 'ja';
-            
-            // 翻訳結果を表示（履歴保存は無し）
-            this.updateContent(targetLanguage, translatedText);
-            
-            console.log('リアルタイム翻訳完了（履歴保存は無し）');
-            
-        } catch (error) {
-            console.error('リアルタイム翻訳エラー:', error);
-            const errorMessage = detectedLang === 'ja' ? '翻訳に失敗しました' : 'Dịch thất bại';
-            const targetLanguage = detectedLang === 'ja' ? 'vi' : 'ja';
-            this.updateContent(targetLanguage, errorMessage);
-        }
-    }
-
-    async translateAndSaveText(text, detectedLang) {
-        if (!text || text.trim() === '') return;
-        
-        try {
-            const translatedText = await this.translateText(text, detectedLang);
-            const targetLanguage = detectedLang === 'ja' ? 'vi' : 'ja';
-            
-            // 翻訳結果を表示
-            this.updateContent(targetLanguage, translatedText);
-            
-            // 履歴には保存しない（マイクオフ時まで待つ）
-            console.log('翻訳完了、履歴保存は待機中');
-            
-        } catch (error) {
-            console.error('翻訳エラー:', error);
-            const errorMessage = detectedLang === 'ja' ? '翻訳に失敗しました' : 'Dịch thất bại';
-            const targetLanguage = detectedLang === 'ja' ? 'vi' : 'ja';
-            this.updateContent(targetLanguage, errorMessage);
-        }
-    }
-
-    async translateContinuousText(text, sourceLanguage) {
-        if (!text || text.trim() === '') return;
-        
-        try {
-            const translatedText = await this.translateText(text, sourceLanguage);
-            const targetLanguage = sourceLanguage === 'ja' ? 'vi' : 'ja';
-            
-            this.updateContent(targetLanguage, translatedText);
-            
-            // 履歴に追加
-            this.addToHistory({
-                timestamp: new Date(),
-                originalLanguage: sourceLanguage,
-                originalText: text,
-                translatedText: translatedText,
-                targetLanguage: targetLanguage
-            });
-
-        } catch (error) {
-            console.error('連続翻訳エラー:', error);
-            const errorMessage = sourceLanguage === 'ja' 
-                ? '翻訳に失敗しました' 
-                : 'Dịch thất bại';
-            
-            const targetLanguage = sourceLanguage === 'ja' ? 'vi' : 'ja';
-            this.updateContent(targetLanguage, errorMessage);
-        }
-    }
-
-    detectLanguage(text) {
-        // より正確なベトナム語文字パターン
-        const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/;
-        // 日本語の文字パターン（ひらがな、カタカナ、漢字）
-        const hiraganaPattern = /[あ-ん]/;
-        const katakanaPattern = /[ア-ン]/;
-        const kanjiPattern = /[一-龯]/;
-        
-        // 明確にベトナム語の特殊文字が含まれている場合
-        if (vietnamesePattern.test(text)) {
-            return 'vi';
-        }
-        
-        // 明確に日本語の文字が含まれている場合
-        if (hiraganaPattern.test(text) || katakanaPattern.test(text)) {
-            return 'ja';
-        }
-        
-        // 漢字のみの場合は、より詳細な分析
-        if (kanjiPattern.test(text)) {
-            // ベトナム語でよく使われる漢字（Chữ Nôm）と日本語の文脈で判断
-            const vietnameseKanjiWords = ['越南', '河内', '胡志明', '大南', '北圻', '中圻', '南圻'];
-            const japaneseKanjiWords = ['日本', '東京', '大阪', '京都', '神戸', '横浜', '福岡'];
-            
-            for (const word of vietnameseKanjiWords) {
-                if (text.includes(word)) {
-                    return 'vi';
-                }
-            }
-            
-            for (const word of japaneseKanjiWords) {
-                if (text.includes(word)) {
-                    return 'ja';
-                }
-            }
-        }
-        
-        // 一般的な単語・フレーズによる判定（強化版）
-        const commonJapanese = [
-            'こんにちは', 'ありがとう', 'すみません', 'はい', 'いいえ', 'です', 'ます', 
-            'おはよう', 'こんばんは', 'さようなら', 'どうも', 'もしもし', 'お疲れ様',
-            'よろしく', 'ください', 'どこ', 'なに', 'いつ', 'だれ', 'どうして', 'なぜ'
-        ];
-        
-        const commonVietnamese = [
-            'xin chào', 'cảm ơn', 'xin lỗi', 'vâng', 'không', 'tôi', 'bạn', 'chúng ta', 'làm',
-            'chào bạn', 'cảm ơn bạn', 'xin chào anh', 'xin chào chị', 'anh ơi', 'chị ơi',
-            'ở đâu', 'gì vậy', 'khi nào', 'ai vậy', 'tại sao', 'vì sao', 'làm gì'
-        ];
-        
-        const textLower = text.toLowerCase();
-        
-        // 日本語の判定
-        let japaneseScore = 0;
-        for (const word of commonJapanese) {
-            if (textLower.includes(word)) {
-                japaneseScore += word.length;
-            }
-        }
-        
-        // ベトナム語の判定
-        let vietnameseScore = 0;
-        for (const word of commonVietnamese) {
-            if (textLower.includes(word)) {
-                vietnameseScore += word.length;
-            }
-        }
-        
-        // スコアによる判定
-        if (vietnameseScore > japaneseScore && vietnameseScore > 0) {
-            return 'vi';
-        } else if (japaneseScore > vietnameseScore && japaneseScore > 0) {
-            return 'ja';
-        }
-        
-        // 音韻的特徴による判定
-        const vietnamesePhonetic = /ng|nh|ph|th|tr|gi|qu/gi;
-        const vietnameseMatches = (text.match(vietnamesePhonetic) || []).length;
-        
-        const japanesePhonetic = /(ん|っ|ゃ|ゅ|ょ|ー)/g;
-        const japaneseMatches = (text.match(japanesePhonetic) || []).length;
-        
-        if (vietnameseMatches > japaneseMatches && vietnameseMatches > 2) {
-            return 'vi';
-        } else if (japaneseMatches > vietnameseMatches && japaneseMatches > 1) {
-            return 'ja';
-        }
-        
-        // デフォルトは日本語（元の動作を維持）
-        return 'ja';
-    }
-
     async handleSpeechResult(text) {
         console.log('認識結果:', text);
         
-        // accumulatedTextに追加（個別音声認識でも連続性を保持）
+        // accumulatedTextに追加
         if (this.accumulatedText) {
             this.accumulatedText += ' ' + text.trim();
         } else {
             this.accumulatedText = text.trim();
         }
-        console.log('蓄積テキスト更新 (個別モード):', this.accumulatedText);
+        console.log('蓄積テキスト更新:', this.accumulatedText);
         
-        this.detectedLanguage = this.detectLanguage(this.accumulatedText);
-        console.log('検出言語:', this.detectedLanguage);
+        // 現在選択されている言語を使用
+        this.detectedLanguage = this.currentLanguage;
+        console.log('使用言語:', this.detectedLanguage);
         
-        // 蓄積テキスト全体を表示
-        this.displayContinuousText(this.accumulatedText, this.detectedLanguage, true);
+        // テキストを表示
+        this.updateContent(this.detectedLanguage, this.accumulatedText);
         this.updateDetectedLanguageStatus(this.detectedLanguage);
 
         try {
@@ -804,8 +413,7 @@ class VoiceTranslator {
             
             this.updateContent(targetLanguage, translatedText);
             
-            // 個別音声認識では履歴保存しない（マイクオフ時まで待つ）
-            console.log('個別音声認識: 翻訳完了、履歴保存は待機中');
+            console.log('翻訳完了、履歴保存は待機中');
 
         } catch (error) {
             console.error('翻訳エラー:', error);
@@ -820,12 +428,12 @@ class VoiceTranslator {
 
     updateDetectedLanguageStatus(detectedLang) {
         if (detectedLang === 'ja') {
-            document.getElementById('japaneseStatus').textContent = '検出: 日本語';
+            document.getElementById('japaneseStatus').textContent = '認識中: 日本語';
             document.getElementById('vietnameseStatus').textContent = 'Chờ';
             document.getElementById('japaneseStatus').style.color = '#4CAF50';
             document.getElementById('vietnameseStatus').style.color = '';
         } else {
-            document.getElementById('vietnameseStatus').textContent = 'Phát hiện: Tiếng Việt';
+            document.getElementById('vietnameseStatus').textContent = 'Đang nhận dạng: Tiếng Việt';
             document.getElementById('japaneseStatus').textContent = '待機中';
             document.getElementById('vietnameseStatus').style.color = '#4CAF50';
             document.getElementById('japaneseStatus').style.color = '';

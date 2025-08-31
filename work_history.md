@@ -619,3 +619,36 @@
 
 ### 編集したファイル:
 - app.js - handleSpeechResult()のaccumulatedText対応と処理統一
+
+## 2025年8月31日 - レスポンシブデザイン修正
+
+### 作業内容
+- モバイル端末でのレイアウト問題を修正
+- iPhoneブラウザのUI要素に隠れる問題を解決
+
+### 修正したファイル
+- `style.css`
+
+### 主な修正点
+1. **Safe Area対応**
+   - `env(safe-area-inset-*)` を使用してiPhoneのノッチ・ホームバーに対応
+   - `padding-bottom` でブラウザの下部UI要素との重複を回避
+
+2. **ビューポートサイズ調整**
+   - `height: 100vh` → `min-height: 100vh` に変更
+   - `100dvh` (dynamic viewport height) 対応
+   - iOS Safari用に `-webkit-fill-available` 追加
+
+3. **スクロール改善**
+   - `overflow: hidden` → `overflow-y: auto` に変更
+   - `-webkit-overflow-scrolling: touch` でスムーズスクロール
+
+4. **レスポンシブ強化**
+   - 768px以下と480px以下でのレイアウト最適化
+   - `position: sticky` でヘッダー固定
+   - キーボード表示時の高さ調整 `calc(100vh - env(keyboard-inset-height))`
+
+### 解決した問題
+- 端末によってウインドウ内に収まらない問題
+- iPhoneでURL入力欄やボタンUIに隠れる問題
+- 小さな画面での操作性向上
