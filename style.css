@@ -249,12 +249,14 @@ header h1 {
 .modal-content {
     background: white;
     border-radius: 15px;
-    max-width: 90%;
-    max-height: 80%;
-    width: 600px;
+    max-width: 95%;
+    max-height: 90%;
+    width: min(600px, 95vw);
+    height: min(80vh, 90vh);
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    margin: auto;
 }
 
 .modal-header {
@@ -282,7 +284,7 @@ header h1 {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
-    max-height: 400px;
+    min-height: 0;
 }
 
 .modal-footer {
@@ -306,10 +308,29 @@ header h1 {
     background: #f8f9fa;
     border-radius: 10px;
     border-left: 4px solid #2196F3;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.history-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.history-item.highlighted {
+    background: #fff3cd;
+    border-left-color: #ffc107;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    transform: scale(1.02);
 }
 
 .history-item.vietnamese {
     border-left-color: #FF9800;
+}
+
+.history-item.vietnamese.highlighted {
+    border-left-color: #ffc107;
 }
 
 .history-timestamp {
@@ -332,8 +353,17 @@ header h1 {
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
+    header {
+        padding: 10px 15px;
+    }
+    
     header h1 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+    }
+    
+    .header-btn {
+        padding: 8px 16px;
+        font-size: 0.8rem;
     }
     
     .mic-btn {
@@ -348,7 +378,80 @@ header h1 {
     }
     
     .modal-content {
-        margin: 20px;
-        max-width: calc(100% - 40px);
+        width: 95vw;
+        height: 85vh;
+        max-width: 95vw;
+        max-height: 85vh;
+        margin: 10px;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 15px;
+    }
+    
+    .history-item {
+        margin-bottom: 15px;
+        padding: 12px;
+    }
+    
+    .history-text,
+    .history-translation {
+        font-size: 0.9rem;
+    }
+    
+    .container {
+        padding: 8px;
+        gap: 8px;
+    }
+    
+    .window {
+        border-radius: 12px;
+    }
+    
+    #autoWindow {
+        min-height: 120px;
+    }
+    
+    .window-header {
+        padding: 12px 15px;
+    }
+    
+    .window-header h2 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1rem;
+    }
+    
+    .modal-content {
+        width: 98vw;
+        height: 90vh;
+        margin: 5px;
+        border-radius: 10px;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 5px;
+        gap: 5px;
+    }
+    
+    #autoWindow {
+        min-height: 100px;
+    }
+    
+    .auto-content {
+        font-size: 14px;
+        padding: 15px;
     }
 }
