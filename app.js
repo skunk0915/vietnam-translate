@@ -201,6 +201,22 @@ class VoiceTranslator {
                 this.stopListeningAndSpeak(vietnameseText);
             }
         });
+
+        // 日本語コピーボタン
+        document.getElementById('japaneseCopyBtn').addEventListener('click', () => {
+            const japaneseText = document.getElementById('japaneseContent').textContent;
+            if (japaneseText && japaneseText.trim()) {
+                this.copyToClipboard(japaneseText);
+            }
+        });
+
+        // ベトナム語コピーボタン  
+        document.getElementById('vietnameseCopyBtn').addEventListener('click', () => {
+            const vietnameseText = document.getElementById('vietnameseContent').textContent;
+            if (vietnameseText && vietnameseText.trim()) {
+                this.copyToClipboard(vietnameseText);
+            }
+        });
     }
 
     // マイクボタンのクリック処理
@@ -492,13 +508,26 @@ class VoiceTranslator {
         } else {
             contentElement.style.opacity = '1';
             
-            // ベトナム語の場合はスピーカーボタンを表示/非表示
+            // 日本語の場合はコピーボタンを表示/非表示
+            if (language === 'ja') {
+                const copyBtn = document.getElementById('japaneseCopyBtn');
+                if (text && text.trim()) {
+                    copyBtn.style.display = 'flex';
+                } else {
+                    copyBtn.style.display = 'none';
+                }
+            }
+            
+            // ベトナム語の場合はスピーカーボタンとコピーボタンを表示/非表示
             if (language === 'vi') {
                 const speakerBtn = document.getElementById('vietnameseSpeaker');
+                const copyBtn = document.getElementById('vietnameseCopyBtn');
                 if (text && text.trim() && text !== 'Kết quả nhận dạng sẽ hiển thị ở đây') {
                     speakerBtn.style.display = 'flex';
+                    copyBtn.style.display = 'flex';
                 } else {
                     speakerBtn.style.display = 'none';
+                    copyBtn.style.display = 'none';
                 }
             }
         }
@@ -899,6 +928,60 @@ class VoiceTranslator {
         } else {
             speakWithVoice();
         }
+    }
+
+    // クリップボードにテキストをコピーする関数
+    async copyToClipboard(text) {
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                // Clipboard APIを使用（HTTPS環境）
+                await navigator.clipboard.writeText(text);
+                console.log('クリップボードにコピーしました:', text);
+                this.showCopyFeedback();
+            } else {
+                // フォールバック（HTTP環境）
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                console.log('クリップボードにコピーしました (fallback):', text);
+                this.showCopyFeedback();
+            }
+        } catch (error) {
+            console.error('クリップボードコピーエラー:', error);
+            alert('クリップボードへのコピーに失敗しました');
+        }
+    }
+
+    // コピー完了のフィードバックを表示
+    showCopyFeedback() {
+        // 簡単な視覚フィードバック
+        const feedback = document.createElement('div');
+        feedback.textContent = 'コピーしました';
+        feedback.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 10000;
+            font-size: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        `;
+        
+        document.body.appendChild(feedback);
+        
+        // 1.5秒後にフィードバックを削除
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 1500);
     }
 }
 
