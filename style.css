@@ -60,37 +60,165 @@ body {
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-header {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+
+/* iOS Safari 専用対応 - シンプル版 */
+@supports (-webkit-touch-callout: none) {
+    .language-toggle-btn,
+    .mic-btn-main {
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        -webkit-transform: translate3d(0,0,0);
+        transform: translate3d(0,0,0);
+        will-change: transform;
+    }
 }
 
-header h1 {
-    color: #333;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.header-btn {
-    background: #2196F3;
+/* 言語切り替えボタン */
+.language-toggle-btn {
+    background: #4CAF50;
+    border: 2px solid #4CAF50;
     color: white;
-    border: none;
-    padding: 10px 20px;
+    padding: 12px 20px;
     border-radius: 25px;
     cursor: pointer;
-    font-size: 0.9rem;
     transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 500;
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+    min-width: 100px;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-border-radius: 25px;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-.header-btn:hover {
-    background: #1976D2;
+.language-toggle-btn:hover {
     transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
 }
+
+.language-toggle-btn.vietnamese {
+    background: #FF9800;
+    border-color: #FF9800;
+    box-shadow: 0 3px 10px rgba(255, 152, 0, 0.3);
+}
+
+.language-toggle-btn.vietnamese:hover {
+    background: #F57C00;
+    border-color: #F57C00;
+    box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+}
+
+/* マイクボタン */
+.mic-btn-main {
+    background: #2196F3;
+    border: 2px solid #2196F3;
+    color: white;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    outline: none;
+    position: relative;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-border-radius: 50%;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.mic-btn-main:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+.mic-btn-main.active {
+    background: #f44336;
+    border-color: #f44336;
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.5);
+}
+
+.mic-icon {
+    font-size: 1.8rem;
+    animation: none;
+}
+
+.mic-btn-main.active .mic-icon {
+    animation: pulse-icon 1s infinite;
+}
+
+@keyframes pulse-icon {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* iOS Safari での表示強制 */
+.language-toggle-btn:after,
+.mic-btn-main:after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* iOS Safari でのフォールバック */
+@media screen and (-webkit-min-device-pixel-ratio: 1) {
+    .language-toggle-btn {
+        background-color: #4CAF50 !important;
+        border: 2px solid #4CAF50 !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .language-toggle-btn.vietnamese {
+        background-color: #FF9800 !important;
+        border-color: #FF9800 !important;
+    }
+    
+    .mic-btn-main {
+        background-color: #2196F3 !important;
+        border: 2px solid #2196F3 !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .mic-btn-main.active {
+        background-color: #f44336 !important;
+        border-color: #f44336 !important;
+    }
+}
+
 
 .container {
     flex: 1 1 0%;
@@ -98,6 +226,7 @@ header h1 {
     flex-direction: row;
     gap: 10px;
     padding: 10px;
+    padding-bottom: 100px; /* bottom-controlsのためのスペース */
     min-height: 0;
     overflow: hidden;
     height: 100%;
@@ -114,6 +243,72 @@ header h1 {
     overflow: hidden;
     min-height: 0;
     height: 100%;
+    transition: all 0.3s ease;
+}
+
+.window.active {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
+    border: 3px solid #4CAF50;
+}
+
+#vietnameseWindow.active {
+    border: 3px solid #FF9800;
+}
+
+/* 矢印のスタイル */
+.arrow-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+}
+
+.arrow {
+    font-size: 2rem;
+    color: #4CAF50;
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transform: rotate(0deg);
+}
+
+.arrow.reverse {
+    color: #FF9800;
+    transform: rotate(180deg);
+}
+
+/* 画面下部のコントロール */
+.bottom-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.control-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: #1976D2;
+    transform: translateY(-2px);
 }
 
 .window-header {
@@ -387,30 +582,15 @@ header h1 {
             left: 0;
             right: 0;
             bottom: 0;
-            margin-top: 60px; /* モバイルheaderの高さ分 */
+            margin-top: 0;
             padding: 8px;
+            padding-bottom: 100px;
             display: flex;
             flex-direction: column;
             gap: 8px;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
-    }
-    
-    header {
-        padding: 10px 15px;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-    
-    header h1 {
-        font-size: 1.1rem;
-    }
-    
-    .header-btn {
-        padding: 8px 16px;
-        font-size: 0.8rem;
     }
     
     .mic-btn {
@@ -420,7 +600,7 @@ header h1 {
     }
     
     .content {
-        font-size: 1rem;
+        font-size: 2rem;
         padding: 15px;
     }
     
@@ -451,6 +631,7 @@ header h1 {
     
     .container {
         padding: 8px;
+        padding-bottom: 100px;
         gap: 8px;
         flex-direction: column;
         overflow-y: auto;
@@ -513,9 +694,9 @@ header h1 {
             left: 0;
             right: 0;
             bottom: 0;
-            margin-top: 55px; /* 小画面headerの高さ分 */
+            margin-top: 0;
             padding: 5px;
-            padding-bottom: 20px;
+            padding-bottom: 100px;
             display: flex;
             flex-direction: column;
             gap: 5px;
@@ -529,16 +710,6 @@ header h1 {
             height: auto;
             min-height: 100px;
         }
-    }
-    
-    header {
-        position: sticky;
-        top: env(safe-area-inset-top);
-        z-index: 10;
-    }
-    
-    header h1 {
-        font-size: 1rem;
     }
     
     .modal-content {
@@ -557,10 +728,10 @@ header h1 {
     
     .container {
         padding: 5px;
+        padding-bottom: 100px;
         gap: 5px;
         flex-direction: column;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 20px;
     }
 }

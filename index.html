@@ -18,42 +18,48 @@
 </head>
 <body>
     <div id="app">
-        <header>
-            <h1>🤖 AI音声翻訳 (日本語⇔ベトナム語)</h1>
-            <button id="historyBtn" class="header-btn">履歴</button>
-        </header>
 
         <div class="container">
             <!-- 日本語ウィンドウ -->
             <div class="window" id="japaneseWindow">
                 <div class="window-header">
                     <h2>日本語</h2>
-                    <button id="japaneseMic" class="mic-btn">
-                        🎤
-                    </button>
                 </div>
                 <div class="content" id="japaneseContent">
-                    認識結果がここに表示されます
+                    
                 </div>
                 <div class="status" id="japaneseStatus">待機中</div>
+            </div>
+
+            <!-- 矢印コンテナ -->
+            <div class="arrow-container">
+                <div class="arrow" id="translationArrow">↓</div>
             </div>
 
             <!-- ベトナム語ウィンドウ -->
             <div class="window" id="vietnameseWindow">
                 <div class="window-header">
                     <h2>Tiếng Việt</h2>
-                    <button id="vietnameseMic" class="mic-btn">
-                        🎤
-                    </button>
                 </div>
                 <div class="content" id="vietnameseContent">
-                    Kết quả nhận dạng sẽ hiển thị ở đây
+                    
                 </div>
                 <div class="content-controls">
                     <button id="vietnameseSpeaker" class="speaker-btn" style="display: none;" title="ベトナム語で読み上げ">🔊</button>
                 </div>
                 <div class="status" id="vietnameseStatus">Chờ</div>
             </div>
+        </div>
+
+        <!-- 画面下部のコントロール -->
+        <div class="bottom-controls">
+            <button id="historyBtn" class="control-btn">履歴</button>
+            <button id="languageToggle" class="language-toggle-btn" type="button" tabindex="0">
+                <span id="languageIndicator">日本語</span>
+            </button>
+            <button id="micButton" class="mic-btn-main" type="button" tabindex="0">
+                <span class="mic-icon">🎤</span>
+            </button>
         </div>
 
         <!-- 履歴モーダル -->

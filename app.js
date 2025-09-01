@@ -3,10 +3,11 @@ class VoiceTranslator {
         this.recognition = null;
         this.isListening = false;
         this.isRecognitionActive = false;
-        this.currentLanguage = null;
+        this.currentLanguage = 'ja'; // デフォルトは日本語
         this.detectedLanguage = null;
         this.history = JSON.parse(localStorage.getItem('translationHistory') || '[]');
         this.accumulatedText = '';
+        this.wasListeningBeforeSpeaking = false; // スピーカー実行前のマイク状態を記録
         
         this.init();
     }
@@ -15,6 +16,7 @@ class VoiceTranslator {
         this.setupSpeechRecognition();
         this.setupEventListeners();
         this.loadHistory();
+        this.updateLanguageIndicator(); // 初期状態の言語表示を設定
     }
 
     setupSpeechRecognition() {
@@ -137,12 +139,32 @@ class VoiceTranslator {
     }
 
     setupEventListeners() {
-        document.getElementById('japaneseMic').addEventListener('click', () => {
-            this.toggleLanguageRecognition('ja');
+        // 言語切り替えボタン
+        const languageToggle = document.getElementById('languageToggle');
+        languageToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.switchLanguage();
         });
-
-        document.getElementById('vietnameseMic').addEventListener('click', () => {
-            this.toggleLanguageRecognition('vi');
+        languageToggle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        });
+        languageToggle.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.switchLanguage();
+        });
+        
+        // 音声認識ボタン
+        const micButton = document.getElementById('micButton');
+        micButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleMicClick();
+        });
+        micButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        });
+        micButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.handleMicClick();
         });
 
         document.getElementById('historyBtn').addEventListener('click', () => {
@@ -167,9 +189,36 @@ class VoiceTranslator {
         document.getElementById('vietnameseSpeaker').addEventListener('click', () => {
             const vietnameseText = document.getElementById('vietnameseContent').textContent;
             if (vietnameseText && vietnameseText.trim() && vietnameseText !== 'Kết quả nhận dạng sẽ hiển thị ở đây') {
-                this.speakVietnamese(vietnameseText);
+                this.stopListeningAndSpeak(vietnameseText);
             }
         });
+    }
+
+    // マイクボタンのクリック処理
+    handleMicClick() {
+        if (this.isListening) {
+            // 現在音声認識中の場合は停止
+            this.stopListening();
+        } else {
+            // 音声認識開始（現在選択されている言語で）
+            this.startLanguageListening(this.currentLanguage);
+        }
+    }
+
+    // 言語を切り替える
+    switchLanguage() {
+        this.currentLanguage = this.currentLanguage === 'ja' ? 'vi' : 'ja';
+        this.updateLanguageIndicator();
+    }
+
+    // 言語表示を更新
+    updateLanguageIndicator() {
+        const indicator = document.getElementById('languageIndicator');
+        indicator.textContent = this.currentLanguage === 'ja' ? '日本語' : 'Tiếng Việt';
+        
+        // 言語切り替えボタンの見た目も更新
+        const languageToggle = document.getElementById('languageToggle');
+        languageToggle.className = `language-toggle-btn ${this.currentLanguage === 'ja' ? 'japanese' : 'vietnamese'}`;
     }
 
     toggleLanguageRecognition(language) {
@@ -230,9 +279,9 @@ class VoiceTranslator {
 
         // コンテンツをクリア
         document.getElementById('japaneseContent').textContent = language === 'ja' 
-            ? '' : '認識結果がここに表示されます';
+            ? '' : '';
         document.getElementById('vietnameseContent').textContent = language === 'vi' 
-            ? '' : 'Kết quả nhận dạng sẽ hiển thị ở đây';
+            ? '' : '';
 
         this.isListening = true;
         
@@ -244,15 +293,55 @@ class VoiceTranslator {
     }
 
     updateMicButtonStates(activeLanguage) {
-        // すべてのマイクボタンを非アクティブ状態にリセット
-        document.getElementById('japaneseMic').classList.remove('active');
-        document.getElementById('vietnameseMic').classList.remove('active');
+        const micButton = document.getElementById('micButton');
+        
+        if (activeLanguage) {
+            // 音声認識中の場合
+            micButton.classList.add('active');
+            this.updateWindowHighlight(activeLanguage);
+            this.updateArrowDirection(activeLanguage);
+        } else {
+            // 音声認識停止時の場合
+            micButton.classList.remove('active');
+            this.updateLanguageIndicator(); // 現在の言語表示を更新
+            this.updateWindowHighlight(null);
+            this.updateArrowDirection(null);
+        }
+    }
 
-        // アクティブな言語のボタンのみアクティブ状態に
+    // ウィンドウのハイライト表示を更新
+    updateWindowHighlight(activeLanguage) {
+        const japaneseWindow = document.getElementById('japaneseWindow');
+        const vietnameseWindow = document.getElementById('vietnameseWindow');
+        
+        // すべてのハイライトをクリア
+        japaneseWindow.classList.remove('active');
+        vietnameseWindow.classList.remove('active');
+        
+        // アクティブな言語のウィンドウをハイライト
         if (activeLanguage === 'ja') {
-            document.getElementById('japaneseMic').classList.add('active');
+            japaneseWindow.classList.add('active');
         } else if (activeLanguage === 'vi') {
-            document.getElementById('vietnameseMic').classList.add('active');
+            vietnameseWindow.classList.add('active');
+        }
+    }
+
+    // 矢印の向きを更新
+    updateArrowDirection(activeLanguage) {
+        const arrow = document.getElementById('translationArrow');
+        
+        if (activeLanguage === 'ja') {
+            // 日本語認識中は下向き（日本語→ベトナム語）
+            arrow.textContent = '↓';
+            arrow.classList.remove('reverse');
+        } else if (activeLanguage === 'vi') {
+            // ベトナム語認識中は上向き（ベトナム語→日本語）
+            arrow.textContent = '↑';
+            arrow.classList.add('reverse');
+        } else {
+            // 認識停止時は下向きにリセット
+            arrow.textContent = '↓';
+            arrow.classList.remove('reverse');
         }
     }
 
@@ -525,11 +614,11 @@ class VoiceTranslator {
                         <div class="history-timestamp">${date.toLocaleString('ja-JP')}</div>
                         <div class="history-text">
                             ${entry.originalText}
-                            ${isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.speakVietnamese('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
+                            ${isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.stopListeningAndSpeak('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
                         </div>
                         <div class="history-translation">
                             ${entry.translatedText}
-                            ${!isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.speakVietnamese('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
+                            ${!isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.stopListeningAndSpeak('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -558,16 +647,38 @@ class VoiceTranslator {
         }
     }
 
+    // マイクを停止してからスピーカーを再生
+    stopListeningAndSpeak(text) {
+        // マイクが動作中なら停止して状態を記録
+        this.wasListeningBeforeSpeaking = this.isListening;
+        if (this.isListening) {
+            this.stopListening();
+        }
+        
+        // ベトナム語音声を再生（コールバック付き）
+        this.speakVietnamese(text, () => {
+            // 音声再生完了後、元々マイクがオンだった場合は再開
+            if (this.wasListeningBeforeSpeaking) {
+                setTimeout(() => {
+                    this.startLanguageListening(this.currentLanguage);
+                    this.wasListeningBeforeSpeaking = false;
+                }, 500); // 0.5秒後に再開
+            }
+        });
+    }
+
     // ベトナム語音声読み上げ機能
-    speakVietnamese(text) {
+    speakVietnamese(text, onEndCallback = null) {
         if (!text || text.trim() === '') {
             console.log('テキストが空です');
+            if (onEndCallback) onEndCallback();
             return;
         }
 
         // Web Speech API のサポート確認
         if (!('speechSynthesis' in window)) {
             alert('お使いのブラウザは音声合成をサポートしていません。');
+            if (onEndCallback) onEndCallback();
             return;
         }
 
@@ -603,6 +714,7 @@ class VoiceTranslator {
             utterance.onerror = (event) => {
                 console.error('音声合成エラー:', event);
                 alert('音声の再生に失敗しました。ブラウザがベトナム語の音声合成をサポートしていない可能性があります。');
+                if (onEndCallback) onEndCallback();
             };
 
             utterance.onstart = () => {
@@ -611,6 +723,10 @@ class VoiceTranslator {
 
             utterance.onend = () => {
                 console.log('ベトナム語音声終了');
+                // 音声再生完了後にコールバック実行
+                if (onEndCallback) {
+                    onEndCallback();
+                }
             };
 
             // 音声を再生
