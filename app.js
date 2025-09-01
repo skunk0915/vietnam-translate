@@ -207,8 +207,26 @@ class VoiceTranslator {
 
     // 言語を切り替える
     switchLanguage() {
-        this.currentLanguage = this.currentLanguage === 'ja' ? 'vi' : 'ja';
-        this.updateLanguageIndicator();
+        const wasListening = this.isListening;
+        const oldLanguage = this.currentLanguage;
+        const newLanguage = this.currentLanguage === 'ja' ? 'vi' : 'ja';
+        
+        // 音声認識中の場合は停止してから新しい言語で再開
+        if (wasListening) {
+            console.log(`言語切り替え: ${oldLanguage} -> ${newLanguage} (音声認識中)`);
+            this.stopListening();
+            
+            // 少し待ってから新しい言語で認識開始
+            setTimeout(() => {
+                this.currentLanguage = newLanguage;
+                this.updateLanguageIndicator();
+                this.startLanguageListening(newLanguage);
+            }, 200);
+        } else {
+            // 音声認識していない場合は単純に切り替え
+            this.currentLanguage = newLanguage;
+            this.updateLanguageIndicator();
+        }
     }
 
     // 言語表示を更新
@@ -266,9 +284,12 @@ class VoiceTranslator {
         } else if (language === 'vi') {
             this.recognition.lang = 'vi-VN';
         }
+        
+        console.log(`音声認識言語設定: ${this.recognition.lang}, currentLanguage: ${this.currentLanguage}`);
 
         // ボタンの状態を更新
         this.updateMicButtonStates(language);
+        this.updateLanguageIndicator();
         
         // ステータスを更新
         const statusElement = language === 'ja' 

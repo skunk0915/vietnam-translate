@@ -248,13 +248,62 @@ body {
 
 .window.active {
     background: rgba(255, 255, 255, 1);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
     transform: scale(1.02);
-    border: 3px solid #4CAF50;
+    border: 2px solid #4CAF50;
+    box-shadow: 
+        0 0 20px rgba(76, 175, 80, 0.6),
+        0 0 40px rgba(76, 175, 80, 0.4),
+        0 0 60px rgba(76, 175, 80, 0.2),
+        inset 0 0 20px rgba(76, 175, 80, 0.1);
+    animation: glowPulse 2s ease-in-out infinite alternate;
 }
 
 #vietnameseWindow.active {
-    border: 3px solid #FF9800;
+    border: 2px solid #FF9800;
+    box-shadow: 
+        0 0 20px rgba(255, 152, 0, 0.6),
+        0 0 40px rgba(255, 152, 0, 0.4),
+        0 0 60px rgba(255, 152, 0, 0.2),
+        inset 0 0 20px rgba(255, 152, 0, 0.1);
+    animation: glowPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+    from {
+        box-shadow: 
+            0 0 20px rgba(76, 175, 80, 0.6),
+            0 0 40px rgba(76, 175, 80, 0.4),
+            0 0 60px rgba(76, 175, 80, 0.2),
+            inset 0 0 20px rgba(76, 175, 80, 0.1);
+    }
+    to {
+        box-shadow: 
+            0 0 30px rgba(76, 175, 80, 0.8),
+            0 0 50px rgba(76, 175, 80, 0.6),
+            0 0 70px rgba(76, 175, 80, 0.4),
+            inset 0 0 30px rgba(76, 175, 80, 0.15);
+    }
+}
+
+#vietnameseWindow.active {
+    animation: glowPulseOrange 2s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulseOrange {
+    from {
+        box-shadow: 
+            0 0 20px rgba(255, 152, 0, 0.6),
+            0 0 40px rgba(255, 152, 0, 0.4),
+            0 0 60px rgba(255, 152, 0, 0.2),
+            inset 0 0 20px rgba(255, 152, 0, 0.1);
+    }
+    to {
+        box-shadow: 
+            0 0 30px rgba(255, 152, 0, 0.8),
+            0 0 50px rgba(255, 152, 0, 0.6),
+            0 0 70px rgba(255, 152, 0, 0.4),
+            inset 0 0 30px rgba(255, 152, 0, 0.15);
+    }
 }
 
 /* 矢印のスタイル */
