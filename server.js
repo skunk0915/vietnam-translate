@@ -8,7 +8,15 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static('.', { 
+    maxAge: '1d',
+    etag: false,
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 
 const translate = new Translate({
     keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
@@ -44,6 +52,16 @@ app.post('/api/translate', async (req, res) => {
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/manifest.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.sendFile(path.join(__dirname, 'manifest.json'));
+});
+
+app.get('/sw.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
 app.listen(port, () => {

@@ -2,7 +2,7 @@
   "name": "日本語⇔ベトナム語 音声翻訳",
   "short_name": "音声翻訳",
   "description": "日本語とベトナム語の双方向音声翻訳アプリ",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#2196F3",
@@ -20,6 +20,6 @@
     }
   ],
   "lang": "ja",
-  "scope": "/",
+  "scope": "./",
   "categories": ["education", "productivity", "utilities"]
 }

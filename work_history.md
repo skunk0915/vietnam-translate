@@ -652,3 +652,22 @@
 - 端末によってウインドウ内に収まらない問題
 - iPhoneでURL入力欄やボタンUIに隠れる問題
 - 小さな画面での操作性向上
+
+## 2025年9月1日 - iOS PWA権限問題修正
+
+### 問題
+- iOSでホーム画面に追加すると「forbidden you don't have permission to access」エラーが発生
+
+### 実施した修正
+1. **server.js**: 静的ファイル配信設定を改善
+   - キャッシュ制御の追加
+   - manifest.jsonとsw.jsの明示的なルート設定
+   - Content-Typeヘッダーの設定
+
+2. **manifest.json**: パス設定を修正
+   - start_url: "/" → "./" に変更
+   - scope: "/" → "./" に変更
+
+### 修正ファイル一覧
+- server.js
+- manifest.json
