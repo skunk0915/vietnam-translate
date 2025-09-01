@@ -362,15 +362,12 @@ class VoiceTranslator {
         
         if (activeLanguage === 'ja') {
             // 日本語認識中は下向き（日本語→ベトナム語）
-            arrow.textContent = '↓';
             arrow.classList.remove('reverse');
         } else if (activeLanguage === 'vi') {
             // ベトナム語認識中は上向き（ベトナム語→日本語）
-            arrow.textContent = '↑';
             arrow.classList.add('reverse');
         } else {
             // 認識停止時は下向きにリセット
-            arrow.textContent = '↓';
             arrow.classList.remove('reverse');
         }
     }
@@ -711,7 +708,7 @@ class VoiceTranslator {
             if (tapLength < 300 && tapLength > 0) {
                 // ダブルタップ検出
                 e.preventDefault();
-                if (!isEditing) {
+                if (!isEditing && this.isRecognitionActive) {  // 認識中のみ編集可能
                     this.enterEditMode(element);
                     isEditing = true;
                 }
@@ -721,7 +718,7 @@ class VoiceTranslator {
 
         // デスクトップ用ダブルクリック
         element.addEventListener('dblclick', () => {
-            if (!isEditing) {
+            if (!isEditing && this.isRecognitionActive) {  // 認識中のみ編集可能
                 this.enterEditMode(element);
                 isEditing = true;
             }
@@ -758,11 +755,16 @@ class VoiceTranslator {
         textarea.select();
         
         // 編集完了処理
-        const finishEdit = () => {
+        const finishEdit = async () => {
             const newText = textarea.value.trim();
             element.textContent = newText;
             element.style.display = 'flex';
             textarea.remove();
+            
+            // 編集されたテキストで再翻訳を実行
+            if (newText && this.isRecognitionActive) {
+                await this.retranslateEditedText(element, newText);
+            }
         };
         
         // Enterキー（Shift+Enterは改行）またはフォーカス外れで編集完了
@@ -774,6 +776,30 @@ class VoiceTranslator {
         });
         
         textarea.addEventListener('blur', finishEdit);
+    }
+
+    // 編集されたテキストで再翻訳を実行
+    async retranslateEditedText(editedElement, newText) {
+        try {
+            // 編集された要素が日本語かベトナム語かを判定
+            const isJapanese = editedElement.id === 'japaneseContent';
+            const sourceLanguage = isJapanese ? 'ja' : 'vi';
+            const targetLanguage = isJapanese ? 'vi' : 'ja';
+            
+            // 翻訳を実行
+            const translatedText = await this.translateText(newText, sourceLanguage);
+            
+            // 翻訳結果を対象言語のウィンドウに表示
+            this.updateContent(targetLanguage, translatedText);
+            
+            console.log('編集後再翻訳完了:', newText, '->', translatedText);
+            
+        } catch (error) {
+            console.error('編集後再翻訳エラー:', error);
+            const errorMessage = sourceLanguage === 'ja' ? '翻訳に失敗しました' : 'Dịch thất bại';
+            const targetLanguage = sourceLanguage === 'ja' ? 'vi' : 'ja';
+            this.updateContent(targetLanguage, errorMessage);
+        }
     }
 
     // マイクを停止してからスピーカーを再生

@@ -77,11 +77,12 @@ html{
 
 /* 言語切り替えボタン */
 .language-toggle-btn {
+    flex: 1;
     background: #4CAF50;
     border: 2px solid #4CAF50;
     color: white;
     padding: 12px 20px;
-    border-radius: 25px;
+    border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 1rem;
@@ -334,8 +335,8 @@ html{
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
-    padding: 15px;
+    gap: 5px;
+    padding: 5px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
@@ -351,7 +352,7 @@ html{
     color: white;
     border: none;
     padding: 10px 20px;
-    border-radius: 25px;
+    border-radius: 5px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.3s ease;
