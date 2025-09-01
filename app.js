@@ -185,8 +185,17 @@ class VoiceTranslator {
             }
         });
 
+        // 文字出力ウィンドウのダブルタップで編集モード
+        this.setupDoubleTabEditMode();
+
         // ベトナム語ウインドウのスピーカーボタン
         document.getElementById('vietnameseSpeaker').addEventListener('click', () => {
+            // 音声再生中の場合は停止
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                return;
+            }
+            
             const vietnameseText = document.getElementById('vietnameseContent').textContent;
             if (vietnameseText && vietnameseText.trim() && vietnameseText !== 'Kết quả nhận dạng sẽ hiển thị ở đây') {
                 this.stopListeningAndSpeak(vietnameseText);
@@ -635,11 +644,11 @@ class VoiceTranslator {
                         <div class="history-timestamp">${date.toLocaleString('ja-JP')}</div>
                         <div class="history-text">
                             ${entry.originalText}
-                            ${isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.stopListeningAndSpeak('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
+                            ${isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.handleSpeakerClick('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
                         </div>
                         <div class="history-translation">
                             ${entry.translatedText}
-                            ${!isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.stopListeningAndSpeak('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
+                            ${!isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.handleSpeakerClick('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -666,6 +675,105 @@ class VoiceTranslator {
             this.saveHistory();
             this.hideHistory();
         }
+    }
+
+    // スピーカーボタンのクリック処理（停止機能付き）
+    handleSpeakerClick(text) {
+        // 音声再生中の場合は停止
+        if (speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+            return;
+        }
+        
+        // 音声再生開始
+        this.stopListeningAndSpeak(text);
+    }
+
+    // 文字出力ウィンドウのダブルタップ編集モード設定
+    setupDoubleTabEditMode() {
+        const japaneseContent = document.getElementById('japaneseContent');
+        const vietnameseContent = document.getElementById('vietnameseContent');
+        
+        // 各コンテンツエリアにダブルタップ機能を追加
+        this.addDoubleTabEdit(japaneseContent);
+        this.addDoubleTabEdit(vietnameseContent);
+    }
+
+    // ダブルタップ編集機能をコンテンツエリアに追加
+    addDoubleTabEdit(element) {
+        let lastTap = 0;
+        let isEditing = false;
+        
+        element.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                // ダブルタップ検出
+                e.preventDefault();
+                if (!isEditing) {
+                    this.enterEditMode(element);
+                    isEditing = true;
+                }
+            }
+            lastTap = currentTime;
+        });
+
+        // デスクトップ用ダブルクリック
+        element.addEventListener('dblclick', () => {
+            if (!isEditing) {
+                this.enterEditMode(element);
+                isEditing = true;
+            }
+        });
+    }
+
+    // 編集モードに入る
+    enterEditMode(element) {
+        const currentText = element.textContent || '';
+        
+        // テキストエリアを作成
+        const textarea = document.createElement('textarea');
+        textarea.value = currentText;
+        textarea.className = 'edit-textarea';
+        textarea.style.cssText = `
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            font-family: inherit;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+        `;
+        
+        // 元のコンテンツを隠して、テキストエリアを表示
+        element.style.display = 'none';
+        element.parentNode.insertBefore(textarea, element.nextSibling);
+        textarea.focus();
+        textarea.select();
+        
+        // 編集完了処理
+        const finishEdit = () => {
+            const newText = textarea.value.trim();
+            element.textContent = newText;
+            element.style.display = 'flex';
+            textarea.remove();
+        };
+        
+        // Enterキー（Shift+Enterは改行）またはフォーカス外れで編集完了
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                finishEdit();
+            }
+        });
+        
+        textarea.addEventListener('blur', finishEdit);
     }
 
     // マイクを停止してからスピーカーを再生

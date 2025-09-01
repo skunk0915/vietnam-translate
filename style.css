@@ -12,7 +12,9 @@ body {
     overflow-x: hidden;
     padding-bottom: env(safe-area-inset-bottom);
 }
-
+html{
+    overscroll-behavior: none;
+}
 /* iOS Safari対応 */
 @supports (-webkit-touch-callout: none) {
     html {
