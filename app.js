@@ -202,6 +202,9 @@ class VoiceTranslator {
         // 文字出力ウィンドウのダブルタップで編集モード
         this.setupDoubleTabEditMode();
 
+        // 言語ウィンドウのタップで音声認識言語を切り替え
+        this.setupLanguageWindowTap();
+
         // ベトナム語ウインドウのスピーカーボタン
         document.getElementById('vietnameseSpeaker').addEventListener('click', () => {
             // 音声再生中の場合は停止
@@ -1063,6 +1066,92 @@ class VoiceTranslator {
                 block: 'start'
             });
         }
+    }
+
+    // 言語ウィンドウのタップで音声認識言語を切り替える機能
+    setupLanguageWindowTap() {
+        const japaneseContent = document.getElementById('japaneseContent');
+        const vietnameseContent = document.getElementById('vietnameseContent');
+        const japaneseWindow = document.getElementById('japaneseWindow');
+        const vietnameseWindow = document.getElementById('vietnameseWindow');
+
+        // 日本語コンテンツエリアとウィンドウのタップ
+        [japaneseContent, japaneseWindow].forEach(element => {
+            element.addEventListener('click', (e) => {
+                // 編集モード中やコピー・スピーカーボタンのクリックは除外
+                if (e.target.classList.contains('copy-btn') || 
+                    e.target.classList.contains('speaker-btn') ||
+                    e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                this.switchToLanguage('ja');
+            });
+
+            element.addEventListener('touchend', (e) => {
+                // 編集モード中やコピー・スピーカーボタンのタップは除外
+                if (e.target.classList.contains('copy-btn') || 
+                    e.target.classList.contains('speaker-btn') ||
+                    e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                // ダブルタップ編集機能と競合しないように少し待つ
+                setTimeout(() => {
+                    this.switchToLanguage('ja');
+                }, 100);
+            });
+        });
+
+        // ベトナム語コンテンツエリアとウィンドウのタップ
+        [vietnameseContent, vietnameseWindow].forEach(element => {
+            element.addEventListener('click', (e) => {
+                // 編集モード中やコピー・スピーカーボタンのクリックは除外
+                if (e.target.classList.contains('copy-btn') || 
+                    e.target.classList.contains('speaker-btn') ||
+                    e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                this.switchToLanguage('vi');
+            });
+
+            element.addEventListener('touchend', (e) => {
+                // 編集モード中やコピー・スピーカーボタンのタップは除外
+                if (e.target.classList.contains('copy-btn') || 
+                    e.target.classList.contains('speaker-btn') ||
+                    e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                // ダブルタップ編集機能と競合しないように少し待つ
+                setTimeout(() => {
+                    this.switchToLanguage('vi');
+                }, 100);
+            });
+        });
+    }
+
+    // 指定した言語に切り替える（タップ用）
+    switchToLanguage(targetLanguage) {
+        const wasListening = this.isListening;
+        
+        // 既に対象言語で認識中の場合は何もしない
+        if (this.currentLanguage === targetLanguage && wasListening) {
+            return;
+        }
+        
+        console.log(`言語ウィンドウタップ: ${targetLanguage}に切り替え`);
+        
+        // 現在音声認識中の場合は停止
+        if (wasListening) {
+            this.stopListening();
+        }
+        
+        // 言語を切り替え
+        this.currentLanguage = targetLanguage;
+        this.updateLanguageIndicator();
+        
+        // 音声認識を開始
+        setTimeout(() => {
+            this.startLanguageListening(targetLanguage);
+        }, 200);
     }
 }
 
