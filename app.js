@@ -716,8 +716,9 @@ class VoiceTranslator {
     // スピーカーボタンのクリック処理（停止機能付き）
     handleSpeakerClick(text) {
         // 音声再生中の場合は停止
-        if (speechSynthesis.speaking) {
+        if (speechSynthesis.speaking || speechSynthesis.pending) {
             speechSynthesis.cancel();
+            console.log('音声再生を停止しました');
             return;
         }
         
@@ -862,7 +863,7 @@ class VoiceTranslator {
     }
 
     // ベトナム語音声読み上げ機能
-    speakVietnamese(text, onEndCallback = null) {
+    async speakVietnamese(text, onEndCallback = null) {
         if (!text || text.trim() === '') {
             console.log('テキストが空です');
             if (onEndCallback) onEndCallback();
@@ -877,7 +878,11 @@ class VoiceTranslator {
         }
 
         // 現在の音声を停止
-        speechSynthesis.cancel();
+        if (speechSynthesis.speaking || speechSynthesis.pending) {
+            speechSynthesis.cancel();
+            // 停止処理が完了するまで少し待つ
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
 
         // 音声の読み込み処理
         const speakWithVoice = () => {
@@ -907,7 +912,11 @@ class VoiceTranslator {
             // エラーハンドリング
             utterance.onerror = (event) => {
                 console.error('音声合成エラー:', event);
-                alert('音声の再生に失敗しました。ブラウザがベトナム語の音声合成をサポートしていない可能性があります。');
+                if (event.error === 'interrupted') {
+                    console.log('音声が中断されました');
+                } else {
+                    alert('音声の再生に失敗しました。ブラウザがベトナム語の音声合成をサポートしていない可能性があります。');
+                }
                 if (onEndCallback) onEndCallback();
             };
 

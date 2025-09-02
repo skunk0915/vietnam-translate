@@ -1233,6 +1233,8 @@ id="japaneseContent"、id="vietnameseWindow"に文字コピーボタンを追加
 
 - **リトライ時通知音無効化**: `isNewSession`フラグを追加して新規音声認識開始時のみ通知音を再生し、リトライ時には通知音を鳴らさないよう修正。
 
+- **音声再生中の重複再生エラー修正**: app.js:909で発生していた`SpeechSynthesisErrorEvent`（error: 'interrupted'）を解決。`speechSynthesis.speaking || speechSynthesis.pending`の状態チェックを追加し、音声合成エラーでinterruptedの場合は適切にハンドリングするよう修正。音声合成メソッドを`async`化し、停止処理の待機時間を追加。
+
 ### 編集ファイル:
-- `/Users/mizy/Documents/vietnam-translate/app.js` - コピーボタン追加、通知音関数追加
+- `/Users/mizy/Documents/vietnam-translate/app.js` - コピーボタン追加、通知音関数追加、音声再生エラー修正
 - `/Users/mizy/Documents/vietnam-translate/style.css` - iOS Safari用CSS修正
