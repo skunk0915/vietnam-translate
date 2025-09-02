@@ -177,6 +177,14 @@ class VoiceTranslator {
             this.showHistory();
         });
 
+        document.getElementById('scrollToJapanese').addEventListener('click', () => {
+            this.scrollToElement('japaneseWindow');
+        });
+
+        document.getElementById('scrollToVietnamese').addEventListener('click', () => {
+            this.scrollToElement('vietnameseWindow');
+        });
+
         document.getElementById('closeHistoryBtn').addEventListener('click', () => {
             this.hideHistory();
         });
@@ -1033,6 +1041,16 @@ class VoiceTranslator {
             oscillator.stop(audioContext.currentTime + 0.3);
         } catch (error) {
             console.error('通知音の再生に失敗しました:', error);
+        }
+    }
+
+    scrollToElement(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
         }
     }
 }
