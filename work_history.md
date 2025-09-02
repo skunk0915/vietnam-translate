@@ -1223,3 +1223,16 @@ id="japaneseContent"、id="vietnameseWindow"に文字コピーボタンを追加
 - index.html - 日本語・ベトナム語ウィンドウにコピーボタン追加
 - style.css - コピーボタンのスタイリング追加  
 - app.js - コピー機能とイベントリスナー、視覚フィードバックの実装
+
+## 2025-09-02 
+- **履歴項目にベトナム語コピーボタンを追加**: 各履歴項目にベトナム語テキストをクリップボードにコピーするボタンを追加。`copyToClipboard`関数を使用してボタンクリック時にベトナム語テキストをコピー可能にした。
+
+- **iOS Safari用ウィンドウサイズ自動調整**: `japaneseContent`と`vietnameseWindow`のCSSを修正し、iOS Safariでもコンテンツ量に応じてウィンドウサイズが自動調整されるよう対応。flexプロパティと高さ設定を調整。
+
+- **言語別認識開始通知音**: 日本語認識開始時は800Hz、ベトナム語認識開始時は400Hzの通知音を再生する`playNotificationSound`関数を実装。Web Audio APIを使用し、音声認識開始時に言語に応じて異なる音程で通知。
+
+- **リトライ時通知音無効化**: `isNewSession`フラグを追加して新規音声認識開始時のみ通知音を再生し、リトライ時には通知音を鳴らさないよう修正。
+
+### 編集ファイル:
+- `/Users/mizy/Documents/vietnam-translate/app.js` - コピーボタン追加、通知音関数追加
+- `/Users/mizy/Documents/vietnam-translate/style.css` - iOS Safari用CSS修正

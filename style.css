@@ -7,9 +7,6 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-x: hidden;
     padding-bottom: env(safe-area-inset-bottom);
 }
 html{
@@ -22,43 +19,26 @@ html{
     }
     
     body {
-        min-height: -webkit-fill-available;
-        height: -webkit-fill-available;
         position: relative;
     }
     
     #app {
-        min-height: -webkit-fill-available;
-        height: -webkit-fill-available;
         position: relative;
     }
     
     .container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
         margin-top: 80px; /* headerの高さ分 */
         padding: 10px;
-        display: flex;
-        flex-direction: row;
         gap: 10px;
     }
     
     .window {
-        flex: 1 1 0%;
-        -webkit-flex: 1 1 0%;
-        min-height: 0;
-        height: 100%;
     }
 }
 
 #app {
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
+    
+    
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
@@ -224,28 +204,17 @@ html{
 
 
 .container {
-    flex: 1 1 0%;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
     padding: 10px;
     padding-bottom: 100px; /* bottom-controlsのためのスペース */
-    min-height: 0;
-    overflow: hidden;
-    height: 100%;
+
 }
 
 .window {
-    flex: 1 1 0%;
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
-    display: flex;
-    flex-direction: column;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
-    overflow: hidden;
-    min-height: 0;
-    height: 100%;
+
     transition: all 0.3s ease;
 }
 
@@ -414,14 +383,11 @@ html{
 }
 
 .content {
-    flex: 1;
     padding: 20px;
     font-size: 1.1rem;
     line-height: 1.6;
     color: #333;
-    overflow-y: auto;
     background: rgba(255, 255, 255, 0.5);
-    display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
@@ -443,8 +409,6 @@ html{
 /* コンテンツコントロール */
 .content-controls {
     padding: 10px 20px;
-    display: flex;
-    justify-content: flex-end;
     gap: 10px;
     background: rgba(255, 255, 255, 0.3);
 }
@@ -638,40 +602,25 @@ html{
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     body {
-        min-height: 100vh;
-        min-height: calc(100vh - env(keyboard-inset-height));
     }
     
     #app {
-        min-height: 100vh;
-        min-height: calc(100vh - env(keyboard-inset-height));
     }
     
     /* iOS Safari特化 */
     @supports (-webkit-touch-callout: none) {
         body {
-            height: -webkit-fill-available;
         }
         
         #app {
-            height: -webkit-fill-available;
             position: relative;
         }
         
         .container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
             margin-top: 0;
             padding: 8px;
             padding-bottom: 100px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+
         }
     }
     
@@ -684,12 +633,13 @@ html{
     .content {
         font-size: 2rem;
         padding: 15px;
+
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
     .modal-content {
         width: 95vw;
-        height: 85vh;
-        height: calc(85vh - env(safe-area-inset-bottom));
         max-width: 95vw;
         max-height: 85vh;
         margin: 10px;
@@ -715,25 +665,18 @@ html{
         padding: 8px;
         padding-bottom: 100px;
         gap: 8px;
-        flex-direction: column;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        min-height: 0;
     }
     
     .window {
-        flex: 1;
+        
         -webkit-flex: 1;
         border-radius: 12px;
-        min-height: 100px;
     }
     
     /* iOS Safari特化 */
     @supports (-webkit-touch-callout: none) {
         .window {
-            flex: 1 1 0%;
-            -webkit-flex: 1 1 0%;
-            height: 100%;
+            
         }
     }
     
@@ -748,49 +691,30 @@ html{
 
 @media (max-width: 480px) {
     body {
-        min-height: 100vh;
-        min-height: calc(100vh - env(keyboard-inset-height));
         padding-bottom: max(env(safe-area-inset-bottom), 20px);
     }
     
     #app {
-        min-height: 100vh;
-        min-height: calc(100vh - env(keyboard-inset-height));
         padding: env(safe-area-inset-top) env(safe-area-inset-right) max(env(safe-area-inset-bottom), 20px) env(safe-area-inset-left);
     }
     
     /* iOS Safari特化 */
     @supports (-webkit-touch-callout: none) {
         body {
-            height: -webkit-fill-available;
         }
         
         #app {
-            height: -webkit-fill-available;
             position: relative;
         }
         
         .container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
             margin-top: 0;
             padding: 5px;
             padding-bottom: 100px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+;
         }
         
         .window {
-            flex: 1 1 0%;
-            -webkit-flex: 1 1 0%;
-            height: auto;
-            min-height: 100px;
         }
     }
     
@@ -811,9 +735,5 @@ html{
     .container {
         padding: 5px;
         padding-bottom: 100px;
-        gap: 5px;
-        flex-direction: column;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
     }
 }

@@ -39,10 +39,16 @@ class VoiceTranslator {
         this.recognitionTimeout = null;
         this.retryCount = 0;
         this.maxRetries = 3;
+        this.isNewSession = true; // 新規セッション開始フラグ
 
         this.recognition.onstart = () => {
             console.log('音声認識開始');
             this.isRecognitionActive = true;
+            // 新規セッション開始時のみ通知音を再生（リトライ時は再生しない）
+            if (this.isNewSession) {
+                this.playNotificationSound(this.currentLanguage);
+                this.isNewSession = false; // フラグをリセット
+            }
             if (this.currentLanguage === 'ja') {
                 document.getElementById('japaneseStatus').textContent = '聞いています...';
             } else {
@@ -282,6 +288,9 @@ class VoiceTranslator {
             alert('音声認識が利用できません。ブラウザを再読み込みしてください。');
             return;
         }
+        
+        // 新規セッション開始フラグを設定
+        this.isNewSession = true;
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -675,6 +684,7 @@ class VoiceTranslator {
                         <div class="history-translation">
                             ${entry.translatedText}
                             ${!isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.handleSpeakerClick('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
+                            ${hasVietnamese ? `<button class="copy-btn" onclick="event.stopPropagation(); voiceTranslator.copyToClipboard('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語をコピー">📋</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -982,6 +992,39 @@ class VoiceTranslator {
                 feedback.parentNode.removeChild(feedback);
             }
         }, 1500);
+    }
+
+    // 音声認識開始通知音を再生する関数
+    playNotificationSound(language) {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // 言語によって異なる音程を設定
+            if (language === 'ja') {
+                // 日本語: 高めの音（800Hz）
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            } else {
+                // ベトナム語: 低めの音（400Hz）
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+            }
+            
+            oscillator.type = 'sine';
+            
+            // 音量のフェードイン・フェードアウト
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        } catch (error) {
+            console.error('通知音の再生に失敗しました:', error);
+        }
     }
 }
 
