@@ -8,6 +8,7 @@ class VoiceTranslator {
         this.history = JSON.parse(localStorage.getItem('translationHistory') || '[]');
         this.accumulatedText = '';
         this.wasListeningBeforeSpeaking = false; // スピーカー実行前のマイク状態を記録
+        this.micPermissionGranted = false; // マイクアクセス許可の状態
         
         this.init();
     }
@@ -116,7 +117,7 @@ class VoiceTranslator {
                 this.retryCount++;
                 setTimeout(() => {
                     this.startRecognitionSafely();
-                }, 2000);
+                }, 500);
             } else {
                 setTimeout(() => {
                     currentLangElement.style.color = '';
@@ -136,7 +137,7 @@ class VoiceTranslator {
                         console.log('音声認識再開, retry:', this.retryCount);
                         this.startRecognitionSafely();
                     }
-                }, 1000);
+                }, 100);
             } else if (this.retryCount >= this.maxRetries) {
                 console.log('最大リトライ回数に達しました');
                 this.handleRecognitionFailure();
@@ -253,17 +254,15 @@ class VoiceTranslator {
         const oldLanguage = this.currentLanguage;
         const newLanguage = this.currentLanguage === 'ja' ? 'vi' : 'ja';
         
-        // 音声認識中の場合は停止してから新しい言語で再開
+        // 音声認識中の場合は停止してから新しい言語で即座に再開
         if (wasListening) {
             console.log(`言語切り替え: ${oldLanguage} -> ${newLanguage} (音声認識中)`);
             this.stopListening();
             
-            // 少し待ってから新しい言語で認識開始
-            setTimeout(() => {
-                this.currentLanguage = newLanguage;
-                this.updateLanguageIndicator();
-                this.startLanguageListening(newLanguage);
-            }, 200);
+            // 即座に新しい言語で認識開始
+            this.currentLanguage = newLanguage;
+            this.updateLanguageIndicator();
+            this.startLanguageListening(newLanguage);
         } else {
             // 音声認識していない場合は単純に切り替え
             this.currentLanguage = newLanguage;
@@ -303,20 +302,24 @@ class VoiceTranslator {
         // 新規セッション開始フラグを設定
         this.isNewSession = true;
 
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                } 
-            });
-            stream.getTracks().forEach(track => track.stop());
-            console.log(`${language}音声認識のマイクアクセス許可確認完了`);
-        } catch (error) {
-            console.error('マイクアクセス許可エラー:', error);
-            alert('マイクへのアクセス許可が必要です。ブラウザの設定を確認してください。');
-            return;
+        // 初回のみマイクアクセス許可を確認
+        if (!this.micPermissionGranted) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+                stream.getTracks().forEach(track => track.stop());
+                this.micPermissionGranted = true;
+                console.log(`マイクアクセス許可確認完了`);
+            } catch (error) {
+                console.error('マイクアクセス許可エラー:', error);
+                alert('マイクへのアクセス許可が必要です。ブラウザの設定を確認してください。');
+                return;
+            }
         }
 
         this.currentLanguage = language;
@@ -351,11 +354,8 @@ class VoiceTranslator {
 
         this.isListening = true;
         
-        setTimeout(() => {
-            if (this.isListening) {
-                this.startRecognitionSafely();
-            }
-        }, 500);
+        // 即座に音声認識を開始
+        this.startRecognitionSafely();
     }
 
     updateMicButtonStates(activeLanguage) {
@@ -1148,10 +1148,8 @@ class VoiceTranslator {
         this.currentLanguage = targetLanguage;
         this.updateLanguageIndicator();
         
-        // 音声認識を開始
-        setTimeout(() => {
-            this.startLanguageListening(targetLanguage);
-        }, 200);
+        // 即座に音声認識を開始
+        this.startLanguageListening(targetLanguage);
     }
 }
 
