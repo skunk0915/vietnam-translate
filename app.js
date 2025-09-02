@@ -684,7 +684,10 @@ class VoiceTranslator {
                 
                 return `
                     <div class="history-item ${isVietnamese ? 'vietnamese' : ''}" data-index="${index}" onclick="voiceTranslator.toggleHistoryHighlight(${index})">
-                        <div class="history-timestamp">${date.toLocaleString('ja-JP')}</div>
+                        <div class="history-timestamp">
+                            ${date.toLocaleString('ja-JP')}
+                            <button class="delete-btn" onclick="event.stopPropagation(); voiceTranslator.deleteHistoryItem(${index})" title="この履歴を削除">🗑️</button>
+                        </div>
                         <div class="history-text">
                             ${entry.originalText}
                             ${isVietnamese && hasVietnamese ? `<button class="speaker-btn" onclick="event.stopPropagation(); voiceTranslator.handleSpeakerClick('${vietnameseText.replace(/'/g, "\\'")}')" title="ベトナム語で読み上げ">🔊</button>` : ''}
@@ -718,6 +721,14 @@ class VoiceTranslator {
             this.history = [];
             this.saveHistory();
             this.hideHistory();
+        }
+    }
+
+    deleteHistoryItem(index) {
+        if (confirm('この履歴を削除しますか？')) {
+            this.history.splice(index, 1);
+            this.saveHistory();
+            this.showHistory(); // 履歴表示を更新
         }
     }
 

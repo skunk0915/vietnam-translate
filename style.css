@@ -587,6 +587,35 @@ html{
     font-size: 0.8rem;
     color: #999;
     margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-btn {
+    border: none;
+    color: white;
+    font-size: 0.9rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+}
+
+.delete-btn:hover {
+    background: rgba(244, 67, 54, 1);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+}
+
+.delete-btn:active {
+    transform: scale(0.95);
+    background: #d32f2f;
 }
 
 .history-text {
